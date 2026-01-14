@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import { getCoordinatesRelativeToElement } from "../../utils/getCanvasCoordinates";
 import { useMyUserStore } from "../../../user/store/useMyUserStore";
+import { useColorStore } from "../../../../shared/store/useColorStore";
 import styles from './DrawArea.module.css';
 import { SocketManager } from "../../../../shared/services/SocketManager";
 import type { DrawPoint, Point } from "../../../../shared/types/drawing.type";
@@ -36,6 +37,8 @@ export function DrawArea() {
   const { myUser } = useMyUserStore();
   const canUserDraw = useMemo(() => myUser !== null, [myUser]);
 
+  const currentColor = useColorStore((state) => state.color);
+
   /**
    * ===================
    * GESTION COORDONNEES
@@ -47,9 +50,10 @@ export function DrawArea() {
     return getCoordinatesRelativeToElement(e.clientX, e.clientY, canvasRef.current);
   }
 
-  const drawLine = useCallback((
+ const drawLine = useCallback((
     from: { x: number, y: number } | null,
-    to: { x: number, y: number }
+    to: { x: number, y: number },
+    color: string
   ) => {
     if (!canvasRef.current) {
       return;
@@ -60,8 +64,9 @@ export function DrawArea() {
       return;
     }
 
-    ctx.strokeStyle = 'black';
+    ctx.strokeStyle = color;
     ctx.lineWidth = 1;
+
     if (from) {
       const absoluteFrom = RelativeToAbsolute(from);
 
@@ -77,7 +82,7 @@ export function DrawArea() {
     }
 
     ctx.stroke();
-  }, []);
+ }, [currentColor]);
 
   const AbsoluteToRelative = (point: { x: number, y: number }) => {
     if (canvasRef.current) {
@@ -91,7 +96,7 @@ export function DrawArea() {
     }
   }
 
-  const drawOtherUserPoints = useCallback((socketId: string, points: Point[]) => {
+  const drawOtherUserPoints = useCallback((socketId: string, points: Point[], color: string) => {
     const previousPoints = otherUserStrokes.current.get(socketId) || [];
 
     points.forEach((point, index) => {
@@ -101,9 +106,9 @@ export function DrawArea() {
       if (previousPoints[index]) {
         return;
       }
-      drawLine(to, from);
+      drawLine(to, from, color);
     })
-  }, [])
+  }, [drawLine])
 
   const getAllStrokes = useCallback(() => {
     SocketManager.get('strokes').then((data) => {
@@ -112,7 +117,7 @@ export function DrawArea() {
       }
 
       data.strokes.forEach((stroke) => {
-        drawOtherUserPoints(stroke.socketId, stroke.points);
+        drawOtherUserPoints(stroke.socketId, stroke.points, stroke.color);
       });
     })
   }, [drawOtherUserPoints])
@@ -137,7 +142,8 @@ export function DrawArea() {
         {
           x: relativeCoordinates.x,
           y: relativeCoordinates.y
-        }
+        },
+        currentColor
       );
 
       SocketManager.emit('draw:move', {
@@ -147,7 +153,7 @@ export function DrawArea() {
     }
 
 
-  }, []);
+  }, [drawLine]);
 
   const onMouseUp = useCallback((e: MouseEvent) => {
     console.log(e);
@@ -167,7 +173,7 @@ export function DrawArea() {
 
     canvasRef.current.removeEventListener('mousemove', onMouseMove);
     canvasRef.current.removeEventListener('mouseup', onMouseUp);
-  }, []);
+  }, [currentColor]);
 
   const onMouseDown: React.MouseEventHandler<HTMLCanvasElement> = useCallback((e) => {
     /** On empêche à l'utilisateur de dessiner tant qu'il n'a pas rejoint le serveur  */
@@ -198,7 +204,7 @@ export function DrawArea() {
       x: relativeCoordinates.x,
       y: relativeCoordinates.y,
       strokeWidth: 1,
-      color: 'black'
+      color: currentColor
     });
 
     /**
@@ -207,7 +213,7 @@ export function DrawArea() {
     */
     canvasRef.current?.addEventListener('mousemove', onMouseMove);
     canvasRef.current?.addEventListener('mouseup', onMouseUp);
-  }, [canUserDraw, onMouseMove, onMouseUp]);
+  }, [canUserDraw, onMouseMove, onMouseUp, currentColor]);
 
   /**
    * ===================
@@ -283,13 +289,13 @@ export function DrawArea() {
   */
 
   const onOtherUserDrawStart = useCallback((payload: DrawPoint) => {
-    drawOtherUserPoints(payload.socketId, payload.points);
+    drawOtherUserPoints(payload.socketId, payload.points, payload.color);
 
     otherUserStrokes.current.set(payload.socketId, payload.points);
   }, [drawOtherUserPoints]);
 
   const onOtherUserDrawMove = useCallback((payload: DrawPoint) => {
-    drawOtherUserPoints(payload.socketId, payload.points);
+    drawOtherUserPoints(payload.socketId, payload.points, payload.color);
   }, []);
 
   const onOtherUserDrawEnd = useCallback((payload: DrawPoint) => {
