@@ -9,6 +9,6 @@ type colorAction = {
 }
 
 export const useColorStore = create<colorState & colorAction>((set) => ({
-  color : 'pink',
+  color : 'black',
   setColor: (color : string) => set({ color })
 }))

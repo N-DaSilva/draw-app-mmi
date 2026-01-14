@@ -16,6 +16,7 @@ export function DrawToolbar() {
     <div className={styles.toolbar}>
       <input type="radio" name="color" value='black' defaultChecked onClick={handleMouseClick} className="radio radio-lg " />
       <input type="radio" name="color" value='red' onClick={handleMouseClick} className="radio radio-lg bg-red-100 border-red-300 checked:bg-red-200 checked:text-red-600 checked:border-red-600" />
+      <input type="radio" name="color" value='orange' onClick={handleMouseClick} className="radio radio-lg bg-orange-100 border-orange-300 checked:bg-orange-200 checked:text-orange-600 checked:border-orange-600" />
       <input type="radio" name="color" value='yellow' onClick={handleMouseClick} className="radio radio-lg bg-yellow-100 border-yellow-300 checked:bg-yellow-200 checked:text-yellow-600 checked:border-yellow-600" />
       <input type="radio" name="color" value='green' onClick={handleMouseClick} className="radio radio-lg bg-green-100 border-green-300 checked:bg-green-200 checked:text-green-600 checked:border-green-600" />
       <input type="radio" name="color" value='cyan' onClick={handleMouseClick} className="radio radio-lg bg-cyan-100 border-cyan-300 checked:bg-cyan-200 checked:text-cyan-600 checked:border-cyan-600" />

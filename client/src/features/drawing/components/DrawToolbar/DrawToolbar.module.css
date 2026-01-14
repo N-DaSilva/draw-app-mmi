@@ -1,5 +1,8 @@
 .toolbar {
-  padding: 12px;
+  padding: 16px;
   display: flex;
   gap: 16px;
+  margin-bottom: 75px;
+  border: solid lightgray 1px;
+  width: fit-content;
 }
