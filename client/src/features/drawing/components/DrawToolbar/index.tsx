@@ -10,15 +10,13 @@ export function DrawToolbar() {
 
   const handleMouseClick = useCallback((e : React.MouseEvent<HTMLInputElement>) => {
     if(e.currentTarget){
-      console.log(e.currentTarget.value)
       setColor(e.currentTarget.value)
     }
   }, [])
 
   const handleChange = useCallback((e : React.ChangeEvent<HTMLInputElement>)=>{
     if(e.currentTarget){
-      console.log(e.currentTarget.value)
-      setSize(e.currentTarget.value)
+      setSize(parseInt(e.currentTarget.value))
     }
   }, [])
 
@@ -34,7 +32,7 @@ export function DrawToolbar() {
       <input type="radio" name="color" value='purple' onClick={handleMouseClick} className="radio radio-lg bg-purple-100 border-purple-300 checked:bg-purple-200 checked:text-purple-600 checked:border-purple-600" />
       <input type="radio" name="color" value='#df007eff' onClick={handleMouseClick} className="radio radio-lg bg-pink-100 border-pink-300 checked:bg-pink-200 checked:text-pink-600 checked:border-pink-600" />
 
-      <input type="range" min="1" max="10" onChange={handleChange} /> <p>{currentSize}</p>
+      <input type="range" min="1" max="10" onChange={handleChange} className="range" /> <p>{currentSize}</p>
     </div>
   )
 }

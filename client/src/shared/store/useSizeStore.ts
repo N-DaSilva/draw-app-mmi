@@ -1,14 +1,14 @@
 import { create } from 'zustand'
 
 type sizeState = {
-  size : string
+  size : number
 }
 
 type sizeAction = {
-  setSize : (size : string) => void
+  setSize : (size : number) => void
 }
 
 export const useSizeStore = create<sizeState & sizeAction>((set) => ({
-  size : '6',
-  setSize: (size : string) => set({ size })
+  size : 6,
+  setSize: (size : number) => set({ size })
 }))

@@ -5,6 +5,7 @@ import { useColorStore } from "../../../../shared/store/useColorStore";
 import styles from './DrawArea.module.css';
 import { SocketManager } from "../../../../shared/services/SocketManager";
 import type { DrawPoint, Point } from "../../../../shared/types/drawing.type";
+import { useSizeStore } from "../../../../shared/store/useSizeStore";
 
 /**
  * EN SAVOIR PLUS : 
@@ -38,6 +39,7 @@ export function DrawArea() {
   const canUserDraw = useMemo(() => myUser !== null, [myUser]);
 
   const currentColor = useColorStore((state) => state.color);
+  const currentSize = useSizeStore((state) => state.size);
 
   /**
    * ===================
@@ -53,7 +55,8 @@ export function DrawArea() {
  const drawLine = useCallback((
     from: { x: number, y: number } | null,
     to: { x: number, y: number },
-    color: string
+    color: string,
+    width : number
   ) => {
     if (!canvasRef.current) {
       return;
@@ -65,7 +68,7 @@ export function DrawArea() {
     }
 
     ctx.strokeStyle = color;
-    ctx.lineWidth = 1;
+    ctx.lineWidth = width;
 
     if (from) {
       const absoluteFrom = RelativeToAbsolute(from);
@@ -82,7 +85,7 @@ export function DrawArea() {
     }
 
     ctx.stroke();
- }, [currentColor]);
+ }, [currentColor, currentSize]);
 
   const AbsoluteToRelative = (point: { x: number, y: number }) => {
     if (canvasRef.current) {
@@ -96,7 +99,7 @@ export function DrawArea() {
     }
   }
 
-  const drawOtherUserPoints = useCallback((socketId: string, points: Point[], color: string) => {
+  const drawOtherUserPoints = useCallback((socketId: string, points: Point[], color: string, strokeWidth : number) => {
     const previousPoints = otherUserStrokes.current.get(socketId) || [];
 
     points.forEach((point, index) => {
@@ -106,7 +109,7 @@ export function DrawArea() {
       if (previousPoints[index]) {
         return;
       }
-      drawLine(to, from, color);
+      drawLine(to, from, color, strokeWidth);
     })
   }, [drawLine])
 
@@ -117,7 +120,7 @@ export function DrawArea() {
       }
 
       data.strokes.forEach((stroke) => {
-        drawOtherUserPoints(stroke.socketId, stroke.points, stroke.color);
+        drawOtherUserPoints(stroke.socketId, stroke.points, stroke.color, stroke.strokeWidth);
       });
     })
   }, [drawOtherUserPoints])
@@ -143,7 +146,8 @@ export function DrawArea() {
           x: relativeCoordinates.x,
           y: relativeCoordinates.y
         },
-        currentColor
+        currentColor,
+        currentSize
       );
 
       SocketManager.emit('draw:move', {
@@ -173,7 +177,7 @@ export function DrawArea() {
 
     canvasRef.current.removeEventListener('mousemove', onMouseMove);
     canvasRef.current.removeEventListener('mouseup', onMouseUp);
-  }, [currentColor]);
+  }, [currentColor, currentSize]);
 
   const onMouseDown: React.MouseEventHandler<HTMLCanvasElement> = useCallback((e) => {
     /** On empêche à l'utilisateur de dessiner tant qu'il n'a pas rejoint le serveur  */
@@ -203,7 +207,7 @@ export function DrawArea() {
     SocketManager.emit('draw:start', {
       x: relativeCoordinates.x,
       y: relativeCoordinates.y,
-      strokeWidth: 1,
+      strokeWidth: currentSize,
       color: currentColor
     });
 
@@ -289,13 +293,13 @@ export function DrawArea() {
   */
 
   const onOtherUserDrawStart = useCallback((payload: DrawPoint) => {
-    drawOtherUserPoints(payload.socketId, payload.points, payload.color);
+    drawOtherUserPoints(payload.socketId, payload.points, payload.color, payload.strokeWidth);
 
     otherUserStrokes.current.set(payload.socketId, payload.points);
   }, [drawOtherUserPoints]);
 
   const onOtherUserDrawMove = useCallback((payload: DrawPoint) => {
-    drawOtherUserPoints(payload.socketId, payload.points, payload.color);
+    drawOtherUserPoints(payload.socketId, payload.points, payload.color, payload.strokeWidth);
   }, []);
 
   const onOtherUserDrawEnd = useCallback((payload: DrawPoint) => {
